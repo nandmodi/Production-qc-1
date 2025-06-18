@@ -146,10 +146,11 @@
   <button onclick="submitForm()">Next</button>
 </div>
 
+<div class="progress" id="progressText"></div>
 <iframe id="hiddenSubmitFrame" name="hiddenSubmitFrame"></iframe>
 
 <script>
-  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQc6Bd5VEE067t02ubbCE_rAYzgOEN9ggvB8uH28TQKldJ5qGePkdSQeYbdvpbhl3lwb1yIhAr8685B/pub?gid=0&single=true&output=csv";
+  const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR716B7XHlwoRSpJvVcztuKb4MJAGZpIosbhmhPXQKieucfj0MwFYhGU4zz7kpPz2foWNA5Lk82P1Nv/pub?gid=0&single=true&output=csv";
   let data = [];
   let currentIndex = 0;
 
@@ -198,7 +199,7 @@
     const row = data[currentIndex];
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://docs.google.com/forms/d/e/1FAIpQLSfAcGmJXwfrNV1xLUHNEYGRw7I4ErTNH5n6GhUltxDcAH008w/formResponse';
+    form.action = 'https://docs.google.com/forms/d/e/1FAIpQLSdyanOU8V70b9PxJY8mKKe07oeq4JTZ42Lj-DwrVhNR5eVokg/formResponse';
     form.target = 'hiddenSubmitFrame';
 
     const fields = [
