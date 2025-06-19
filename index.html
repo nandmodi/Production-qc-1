@@ -28,7 +28,7 @@
     }
 
     .container {
-      display: flex;
+      display: none;
       justify-content: space-between;
       align-items: flex-start;
       padding: 1px;
@@ -37,10 +37,6 @@
 
     .image-box {
       flex: 1;
-      background: none;
-      padding: 0;
-      border-radius: 0;
-      box-shadow: none;
       text-align: center;
     }
 
@@ -49,7 +45,6 @@
       height: auto;
       max-height: 600px;
       object-fit: contain;
-      border: none;
       margin-bottom: 5px;
     }
 
@@ -59,6 +54,7 @@
     }
 
     .controls {
+      display: none;
       margin: 30px auto;
       text-align: center;
     }
@@ -77,15 +73,10 @@
       padding: 10px 20px;
       border-radius: 6px;
       cursor: pointer;
-      transition: background 0.3s ease;
     }
 
     .status-group input[type="radio"] {
       margin-right: 8px;
-    }
-
-    .status-group label:hover {
-      background: #d0e5f5;
     }
 
     button {
@@ -96,11 +87,6 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    button:hover {
-      background-color: #005bb5;
     }
 
     .progress {
@@ -113,6 +99,16 @@
     iframe {
       display: none;
     }
+
+    #loginScreen {
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    #loginScreen select {
+      padding: 10px;
+      font-size: 1em;
+    }
   </style>
 </head>
 <body>
@@ -121,7 +117,22 @@
   <h1>Image QC Review Dashboard</h1>
 </header>
 
-<div class="container" id="imageContainer" style="display: none;">
+<p id="progressText" class="progress"></p>
+
+<div id="loginScreen">
+  <h2>Login to Start QC Review</h2>
+  <select id="emailInput">
+    <option value="" disabled selected>Select your email ID</option>
+    <option value="samir.ansari@spyne.co.in">samir.ansari@spyne.co.in</option>
+    <option value="ajay.prajapati@spyne.co.in">ajay.prajapati@spyne.co.in</option>
+    <option value="sneha.swami@spyne.co.in">sneha.swami@spyne.co.in</option>
+    <!-- Add more emails here -->
+  </select>
+  <br><br>
+  <button onclick="login()">Start Review</button>
+</div>
+
+<div class="container" id="imageContainer">
   <div class="image-box">
     <h3>Input Image</h3>
     <img id="inputImg" loading="lazy" alt="Input Image">
@@ -134,7 +145,7 @@
   </div>
 </div>
 
-<div class="controls" id="controlPanel" style="display: none;">
+<div class="controls" id="controlPanel">
   <div class="status-group">
     <label><input type="radio" name="status" value="Done">1 - Done</label>
     <label><input type="radio" name="status" value="Cropped">2 - Cropped</label>
@@ -146,35 +157,50 @@
   <button onclick="submitForm()">Next</button>
 </div>
 
-<div class="progress" id="progressText"></div>
 <iframe id="hiddenSubmitFrame" name="hiddenSubmitFrame"></iframe>
 
 <script>
   const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR716B7XHlwoRSpJvVcztuKb4MJAGZpIosbhmhPXQKieucfj0MwFYhGU4zz7kpPz2foWNA5Lk82P1Nv/pub?gid=0&single=true&output=csv";
   let data = [];
   let currentIndex = 0;
+  let userEmail = "";
 
-  Papa.parse(csvUrl, {
-    download: true,
-    header: true,
-    complete: function(results) {
-      data = results.data.filter(row => {
-        const status = (row.status || '').trim().toLowerCase();
-        return !["done", "cropped", "marketing material", "banner", "vehicle overlapped", "editing"].includes(status);
-      });
+  function login() {
+    const emailInput = document.getElementById("emailInput");
+    userEmail = emailInput.value.trim();
 
-      if (data.length === 0) {
-        document.getElementById("progressText").innerText = "✅ All SKUs are already reviewed. No SKU left.";
-        document.getElementById("imageContainer").style.display = "none";
-        document.getElementById("controlPanel").style.display = "none";
-      } else {
-        document.getElementById("imageContainer").style.display = "flex";
-        document.getElementById("controlPanel").style.display = "block";
-        showImage();
-        preloadNextImages();
-      }
+    if (!userEmail || !userEmail.includes("@")) {
+      alert("Please select a valid email ID.");
+      return;
     }
-  });
+
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("progressText").innerText = "📦 Loading data...";
+    loadCSVData();
+  }
+
+  function loadCSVData() {
+    Papa.parse(csvUrl, {
+      download: true,
+      header: true,
+      complete: function(results) {
+        data = results.data.filter(row => {
+          const status = (row.status || '').trim().toLowerCase();
+          return !["done", "cropped", "marketing material", "banner", "vehicle overlapped", "editing"].includes(status);
+        });
+
+        if (data.length === 0) {
+          document.getElementById("progressText").innerText = "✅ All SKUs are already reviewed. No SKU left.";
+        } else {
+          document.getElementById("imageContainer").style.display = "flex";
+          document.getElementById("controlPanel").style.display = "block";
+          document.getElementById("progressText").innerText = "";
+          showImage();
+          preloadNextImages();
+        }
+      }
+    });
+  }
 
   function showImage() {
     if (currentIndex >= data.length) {
@@ -193,6 +219,11 @@
   }
 
   function submitForm() {
+    if (!userEmail || !userEmail.includes("@")) {
+      alert("Login required. Please refresh and log in.");
+      return;
+    }
+
     const status = document.querySelector('input[name="status"]:checked');
     if (!status) return alert("Please select a status.");
 
@@ -205,7 +236,8 @@
     const fields = [
       { name: 'entry.331138758', value: row["image_id"] },
       { name: 'entry.921407097', value: row["sku_id"] },
-      { name: 'entry.2036611691', value: status.value }
+      { name: 'entry.2036611691', value: status.value },
+      { name: 'entry.1651774948', value: userEmail }  // Email field
     ];
 
     fields.forEach(({ name, value }) => {
